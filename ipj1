@@ -162,3 +162,7 @@ plt.xticks(x, ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '1
 plt.show()
 
 plt.show()
+
+
+
+#Nach Objekten. Die Anzahl von Kästchen sofort berechnen. Mit Klassen
