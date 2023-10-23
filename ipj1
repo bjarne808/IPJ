@@ -70,25 +70,11 @@ with open(csv_datei2, 'r') as file:
         energie_daten2.append(datensatz1)
 
 
-for datensatz in energie_daten:
+
     production = [datensatz['Biomasse [MWh]'] + datensatz['Wasserkraft [MWh]'] + datensatz['Wind Offshore [MWh]'] + datensatz['Wind Onshore [MWh]'] + datensatz['Photovoltaik [MWh]'] + datensatz['Sonstige Erneuerbare [MWh]'] for datensatz in energie_daten]
-    if isinstance(production, str):
-        try:
-            production = float(production)
-            production.append(production)
-        except ValueError:
-            pass
 
-
-for datensatz1 in energie_daten2:
     consumption = [datensatz1['Gesamt (Netzlast) [MWh]'] for datensatz1 in energie_daten2]
-    if isinstance(consumption, str):
-        try:
-            consumption = float(consumption)
-            consumption.append(consumption)
-        except ValueError:
-            pass
-    
+
 
 selected_date = datetime.strptime(input_date, '%d.%m.%Y')
 filtered_data = [datensatz for datensatz in energie_daten if parse_datetime(datensatz['Datum'], datensatz['Anfang']).date() == selected_date.date()]
