@@ -1,4 +1,3 @@
-import pandas as pd
 import csv
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -135,7 +134,60 @@ def range1(array1, array2):
 
 counts =[]
 counts = range1(production, consumption)
+print("Anteile in %:")
 print(counts)
+print()
+
+
+
+yearly_data = {}
+
+
+for datensatz in energie_daten:
+    datum = datensatz['Datum']
+    year = datetime.strptime(datum, '%d.%m.%Y').year
+    if year not in yearly_data:
+        yearly_data[year] = {
+            'Production': 0,
+            'Consumption': 0,
+            'Biomasse [MWh]': 0,
+            'Wasserkraft [MWh]': 0,
+            'Wind Offshore [MWh]': 0,
+            'Wind Onshore [MWh]': 0,
+            'Photovoltaik [MWh]': 0,
+            'Sonstige Erneuerbare [MWh]': 0,
+        }
+
+    
+    yearly_data[year]['Production'] += datensatz['Biomasse [MWh]'] + datensatz['Wasserkraft [MWh]'] + datensatz['Wind Offshore [MWh]'] + datensatz['Wind Onshore [MWh]'] + datensatz['Photovoltaik [MWh]'] + datensatz['Sonstige Erneuerbare [MWh]']
+    yearly_data[year]['Biomasse [MWh]'] += datensatz['Biomasse [MWh]']
+    yearly_data[year]['Wasserkraft [MWh]'] += datensatz['Wasserkraft [MWh]']
+    yearly_data[year]['Wind Offshore [MWh]'] += datensatz['Wind Offshore [MWh]']
+    yearly_data[year]['Wind Onshore [MWh]'] += datensatz['Wind Onshore [MWh]']
+    yearly_data[year]['Photovoltaik [MWh]'] += datensatz['Photovoltaik [MWh]']
+    yearly_data[year]['Sonstige Erneuerbare [MWh]'] += datensatz['Sonstige Erneuerbare [MWh]']
+
+
+for datensatz2 in energie_daten2:
+    datum = datensatz2['Datum']
+    year = datetime.strptime(datum, '%d.%m.%Y').year
+    if year in yearly_data:
+        yearly_data[year]['Consumption'] += datensatz2['Gesamt (Netzlast) [MWh]']
+
+
+for year, data in yearly_data.items():
+    print(f"Year: {year}")
+    print(f"Total Production: {data['Production']} MWh")
+    print(f"Total Consumption: {data['Consumption']} MWh")
+    print(f"Biomasse: {data['Biomasse [MWh]']} MWh")
+    print(f"Wasserkraft: {data['Wasserkraft [MWh]']} MWh")
+    print(f"Wind Offshore: {data['Wind Offshore [MWh]']} MWh")
+    print(f"Wind Onshore: {data['Wind Onshore [MWh]']} MWh")
+    print(f"Photovoltaik: {data['Photovoltaik [MWh]']} MWh")
+    print(f"Sonstige Erneuerbare: {data['Sonstige Erneuerbare [MWh]']} MWh")
+    print()
+
+
 
 plt.figure(figsize=(12, 6))
 plt.plot(hours, production_day, label='Production (renewable energy)')
@@ -157,8 +209,8 @@ plt.xticks(x, ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '1
 
 endzeit = time.time()
 dauer = endzeit - startzeit
-print(f"Startzeit: {startzeit}")
-print(f"Endzeit: {endzeit}")
+print()
+print()
 print(f"Dauer des Programms: {dauer} Sekunden")
 
 plt.show()
