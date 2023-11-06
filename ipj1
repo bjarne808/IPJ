@@ -93,44 +93,23 @@ hours = [parse_datetime(datensatz['Datum'], datensatz['Anfang']).hour + parse_da
 production_day = [datensatz['Biomasse [MWh]'] + datensatz['Wasserkraft [MWh]'] + datensatz['Wind Offshore [MWh]'] + datensatz['Wind Onshore [MWh]'] + datensatz['Photovoltaik [MWh]'] + datensatz['Sonstige Erneuerbare [MWh]'] for datensatz in filtered_data]
 consumption_day = [datensatz1['Gesamt (Netzlast) [MWh]'] for datensatz1 in filtered_data2]
 
+
 def range1(array1, array2):
     if len(array1) != len(array2):
         raise ValueError("Arrays must be the same length")
     
-    count10 = 0
-    count20 = 0
-    count30 =0
-    count40 = 0
-    count50 = 0
-    count60 = 0
-    count70 = 0
-    count80 = 0
-    count90 = 0
-    count100 = 0
+    counts = [0] * 100
 
     for val1, val2 in zip(array1, array2):
-        if 0.1 <= val1 / val2 < 0.2:
-            count10 += 1
-        if 0.2 <= val1 / val2 < 0.3:
-            count20 +=1
-        if 0.3 <= val1 / val2 < 0.4:
-            count30 +=1
-        if 0.4 <= val1 / val2 < 0.5:
-            count40 +=1
-        if 0.5 <= val1 / val2 < 0.6:
-            count50 +=1
-        if 0.6 <= val1 / val2 < 0.7:
-            count60 +=1
-        if 0.7 <= val1 / val2 < 0.8:
-            count70 +=1
-        if 0.8 <= val1 / val2 < 0.9:
-            count80 +=1
-        if 0.9 <= val1 / val2 < 1:
-            count90 +=1
-        if  val1 / val2  == 1:
-            count100+=1
+        ratio = val1 / val2
+        percent = int(ratio * 100)
 
-    return [count10, count20, count30, count40, count50, count60, count70, count80, count90, count100]
+        if percent == 100:
+            counts[percent - 1] += 1
+        elif 0 <= percent < 100:
+            counts[percent] += 1
+
+    return counts
 
 counts =[]
 counts = range1(production, consumption)
@@ -177,7 +156,7 @@ for datensatz2 in energie_daten2:
 
 for year, data in yearly_data.items():
     print(f"Year: {year}")
-    print(f"Total Production: {data['Production']} MWh")
+    print(f"Total Renwable Energy Production: {data['Production']} MWh")
     print(f"Total Consumption: {data['Consumption']} MWh")
     print(f"Biomasse: {data['Biomasse [MWh]']} MWh")
     print(f"Wasserkraft: {data['Wasserkraft [MWh]']} MWh")
@@ -187,6 +166,77 @@ for year, data in yearly_data.items():
     print(f"Sonstige Erneuerbare: {data['Sonstige Erneuerbare [MWh]']} MWh")
     print()
 
+
+def find_dates_with_high_ee_ratio(energie_daten, energie_daten2, threshold=0.9):
+    dates_with_high_ratio = set()
+    
+    for datensatz, datensatz1 in zip(energie_daten, energie_daten2):
+        total_consumption = datensatz1['Gesamt (Netzlast) [MWh]']
+        total_production = (
+            datensatz['Biomasse [MWh]'] +
+            datensatz['Wasserkraft [MWh]'] +
+            datensatz['Wind Offshore [MWh]'] +
+            datensatz['Wind Onshore [MWh]'] +
+            datensatz['Photovoltaik [MWh]'] +
+            datensatz['Sonstige Erneuerbare [MWh]']
+        )
+        ratio = total_production / total_consumption
+        
+        if ratio > threshold:
+            date = parse_datetime(datensatz['Datum'], datensatz['Anfang']).date()
+            dates_with_high_ratio.add(date)
+    
+    sorted_dates = sorted(dates_with_high_ratio)  # Сортировка дат от старых к новым
+    
+    return sorted_dates
+
+
+
+
+
+dates_with_high_ee = find_dates_with_high_ee_ratio(energie_daten, energie_daten2)
+
+if dates_with_high_ee:
+    print("Daten mit 90% EE-Anteil:")
+    for date in dates_with_high_ee:
+        print(date)
+else:
+    print("Keine Daten mit 90% EE-Anteil.")
+
+def find_dates_with_ee_ratio(energie_daten, energie_daten2, lower_threshold=0.0, upper_threshold=1.0):
+    dates_with_ee_ratio = set()
+    
+    for datensatz, datensatz1 in zip(energie_daten, energie_daten2):
+        total_consumption = datensatz1['Gesamt (Netzlast) [MWh]']
+        total_production = (
+            datensatz['Biomasse [MWh]'] +
+            datensatz['Wasserkraft [MWh]'] +
+            datensatz['Wind Offshore [MWh]'] +
+            datensatz['Wind Onshore [MWh]'] +
+            datensatz['Photovoltaik [MWh]'] +
+            datensatz['Sonstige Erneuerbare [MWh]']
+        )
+        ratio = total_production / total_consumption
+        
+        if lower_threshold <= ratio <= upper_threshold:
+            date = parse_datetime(datensatz['Datum'], datensatz['Anfang']).date()
+            dates_with_ee_ratio.add(date)
+    
+    sorted_dates = sorted(dates_with_ee_ratio)  # Sortieren von alt zu neu
+    
+    return sorted_dates
+
+lower_threshold = 0.0  
+upper_threshold = 0.2  
+
+dates_with_low_ee = find_dates_with_ee_ratio(energie_daten, energie_daten2, lower_threshold, upper_threshold)
+
+if dates_with_low_ee:
+    print(f"Daten mit EE-Anteil zwischen {lower_threshold * 100}% und {upper_threshold * 100}% :")
+    for date in dates_with_low_ee:
+        print(date)
+else:
+    print(f"Keine DAten mit EE-Anteil zwischen {lower_threshold * 100}% und {upper_threshold * 100}%.")
 
 
 plt.figure(figsize=(12, 6))
@@ -198,14 +248,23 @@ plt.title(f'Energy production and consumption for {selected_date.strftime("%d.%m
 plt.legend()
 plt.grid(True)
 
-plt.xticks(range(0, 24))
+#plt.xticks(range(0, 24))
 
-x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+x = range(100)
 plt.figure(figsize=(6, 4)) 
 plt.bar(range(len(counts)), counts)
-plt.title('Anzahl der Viertelstunden mit 10-100 % EE-Anteil')
-plt.xticks(x, ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'])
+plt.title('Anzahl der Viertelstunden mit 1-100 % EE-Anteil')
+plt.xticks(x[::10], [f'{i}%' for i in range(0, 100, 10)])
+"""
 
+x = range(100)
+plt.figure(figsize=(10, 6))
+plt.bar(x, counts, width=0.8, align='center')
+plt.title('Anzahl der Viertelstunden mit 10-100 % EE-Anteil')
+plt.xticks(x[::10], [f'{i}%' for i in range(0, 101, 10)])
+plt.xlabel('EE-Anteil')
+plt.ylabel('Anzahl der Viertelstunden')
+"""
 
 endzeit = time.time()
 dauer = endzeit - startzeit
