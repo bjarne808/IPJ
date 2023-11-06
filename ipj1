@@ -248,23 +248,12 @@ plt.title(f'Energy production and consumption for {selected_date.strftime("%d.%m
 plt.legend()
 plt.grid(True)
 
-#plt.xticks(range(0, 24))
 
 x = range(100)
 plt.figure(figsize=(6, 4)) 
 plt.bar(range(len(counts)), counts)
 plt.title('Anzahl der Viertelstunden mit 1-100 % EE-Anteil')
-plt.xticks(x[::10], [f'{i}%' for i in range(0, 100, 10)])
-"""
-
-x = range(100)
-plt.figure(figsize=(10, 6))
-plt.bar(x, counts, width=0.8, align='center')
-plt.title('Anzahl der Viertelstunden mit 10-100 % EE-Anteil')
-plt.xticks(x[::10], [f'{i}%' for i in range(0, 101, 10)])
-plt.xlabel('EE-Anteil')
-plt.ylabel('Anzahl der Viertelstunden')
-"""
+plt.xticks(x[::5], [f'{i}%' for i in range(0, 100, 5)])
 
 endzeit = time.time()
 dauer = endzeit - startzeit
