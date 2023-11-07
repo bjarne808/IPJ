@@ -3,16 +3,15 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import time
 
-input_date = input("DD.MM.YYYY: ")
+input_date = input("DD.MM.YYYY: ")                       # Die vom Benutzer eingegebene Zeichenfolge wird gespeichert. 
 
 def parse_datetime(date_str, time_str):
     return datetime.strptime(f"{date_str} {time_str}", '%d.%m.%Y %H:%M')
 
-startzeit = time.time()
+startzeit = time.time()                                  # Die Zeit vom Start des Programms wird gespeichert
 
 csv_datei = 'Realisierte_Erzeugung_202001010000_202212312359_Viertelstunde.csv'
 csv_datei2 = 'Realisierter_Stromverbrauch_202001010000_202212312359_Viertelstunde.csv'
-
 
 energie_daten = []
 energie_daten2 = []
@@ -119,13 +118,12 @@ print()
 
 
 
-yearly_data = {}
-
+yearly_data = {}                                         # Wörterbuch erstellen
 
 for datensatz in energie_daten:
-    datum = datensatz['Datum']
-    year = datetime.strptime(datum, '%d.%m.%Y').year
-    if year not in yearly_data:
+    datum = datensatz['Datum']                           # Extahieren das Datum aus dem aktuellen datensatz
+    year = datetime.strptime(datum, '%d.%m.%Y').year     # Datumsstring "datum" wird in ein datetime-Objekt. Dann wird .year auf das datetime-Objekt angewendet, um nur das Jahr aus dem Datum zu extrahieren.
+    if year not in yearly_data:                          # Wenn das ausgewälte Jahr nicht mit dem aktuellen Jahr stimmen, die Werte auf 0 setzen 
         yearly_data[year] = {
             'Production': 0,
             'Consumption': 0,
@@ -255,8 +253,8 @@ plt.bar(range(len(counts)), counts)
 plt.title('Anzahl der Viertelstunden mit 1-100 % EE-Anteil')
 plt.xticks(x[::5], [f'{i}%' for i in range(0, 100, 5)])
 
-endzeit = time.time()
-dauer = endzeit - startzeit
+endzeit = time.time()                        # Die Zeit vom Ende des Programms wird gespeichert
+dauer = endzeit - startzeit                  # Dauer des Programms wird berechnet
 print()
 print()
 print(f"Dauer des Programms: {dauer} Sekunden")
