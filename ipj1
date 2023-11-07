@@ -19,8 +19,8 @@ production = []
 consumption = []
 
 with open(csv_datei, 'r') as file:
-    csv_reader = csv.reader(file, delimiter=';')
-    next(csv_reader)
+    csv_reader = csv.reader(file, delimiter=';')         # Ein Semikolon ist in dieser Datei das Trennzeichen
+    next(csv_reader)                                     # Header-Zeile wird übersprungen, da diese nicht zu den Daten gehört
     for row in csv_reader:
         datum = row[0]
         anfang = row[1]
