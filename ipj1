@@ -97,23 +97,34 @@ def range1(array1, array2):
     if len(array1) != len(array2):
         raise ValueError("Arrays must be the same length")
     
-    counts = [0] * 100
+    counts = [0] * 111
 
     for val1, val2 in zip(array1, array2):
         ratio = val1 / val2
         percent = int(ratio * 100)
 
         if percent == 100:
-            counts[percent - 1] += 1
-        elif 0 <= percent < 100:
+            counts[percent] += 1
+        elif 0 <= percent < 110:
             counts[percent] += 1
 
     return counts
 
 counts =[]
 counts = range1(production, consumption)
-print("Anteile in %:")
-print(counts)
+n = []
+n = range(111)
+
+def get_result(array1, array2):
+    print("Anteile in %:")
+    if len(array1) != len(array2):
+        raise ValueError("Arrays must be the same length")
+    
+    for val1, val2 in zip(array1, array2):
+        print( val1, "% :"   , val2)
+
+get_result(n, counts)
+print("Anzahl der Viertelstunden in 3 Jahren:", sum(counts))
 print()
 
 
