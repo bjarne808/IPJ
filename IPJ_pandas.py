@@ -2,15 +2,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 import time
+import numpy as np
 
+#Startzeit des Programms
 start_time = time.time()
 
-file_renewable = 'Realisierte_Erzeugung_202001010000_202212312359_Viertelstunde.csv'
+
+# Dateinamen
+file_production = 'Realisierte_Erzeugung_202001010000_202212312359_Viertelstunde.csv'
 file_consumption = 'Realisierter_Stromverbrauch_202001010000_202212312359_Viertelstunde.csv'
 
-renewable_energy_data = pd.read_csv(file_renewable, delimiter=';')
-energy_consumption_data = pd.read_csv(file_consumption, delimiter=';')
+# Einlesen der Daten aus CSV-Dateien
+production_df = pd.read_csv(file_production, delimiter=';')
+consumption_df = pd.read_csv(file_consumption, delimiter=';')
 
+# Spaltenbezeichnungen
 DATE = 'Datum'
 BIOMAS = 'Biomasse [MWh] Originalauflösungen'
 HYDROELECTRIC = 'Wasserkraft [MWh] Originalauflösungen'
@@ -21,28 +27,32 @@ OTHER_RENEWABLE = 'Sonstige Erneuerbare [MWh] Originalauflösungen'
 CONSUMPTION = 'Gesamt (Netzlast) [MWh] Originalauflösungen'
 
 
-renewable_energy_data[DATE] = pd.to_datetime(renewable_energy_data[DATE], format='%d.%m.%Y')
-energy_consumption_data[DATE] = pd.to_datetime(energy_consumption_data[DATE], format='%d.%m.%Y')
+# Umwandlung von Datumsspalten in DateTime-Objekte
+production_df[DATE] = pd.to_datetime(production_df[DATE], format='%d.%m.%Y')
+production_df['Anfang'] = pd.to_datetime(production_df['Anfang'], format='%H:%M')
+consumption_df[DATE] = pd.to_datetime(consumption_df[DATE], format='%d.%m.%Y')
+consumption_df['Anfang'] = pd.to_datetime(consumption_df['Anfang'], format='%H:%M')
 
+# Rechnen von regenerativen Stromerzeugung
 columns_to_clean = [HYDROELECTRIC, BIOMAS, WIND_OFFSHORE, WIND_ONSHORE, PHOTOVOLTAIC, OTHER_RENEWABLE]
 for column in columns_to_clean:
-    renewable_energy_data[column] = renewable_energy_data[column].str.replace(".", "").str.replace(",", ".").replace('-', 0).astype(float)
+    production_df[column] = production_df[column].str.replace(".", "").str.replace(",", ".").replace('-', 0).astype(float)
 
-energy_consumption_data[CONSUMPTION] = energy_consumption_data[CONSUMPTION].str.replace(".", "").str.replace(",", ".").astype(float)
+consumption_df[CONSUMPTION] = consumption_df[CONSUMPTION].str.replace(".", "").str.replace(",", ".").astype(float)
 
-renewable_energy_data['Total Production'] = renewable_energy_data[columns_to_clean].sum(axis=1)
-production_by_year = renewable_energy_data.groupby(renewable_energy_data[DATE].dt.year)['Total Production'].sum()
-consumption_by_year = energy_consumption_data.groupby(energy_consumption_data[DATE].dt.year)[CONSUMPTION].sum()
+production_df['Total Production'] = production_df[columns_to_clean].sum(axis=1)
+production_by_year = production_df.groupby(production_df[DATE].dt.year)['Total Production'].sum()
+consumption_by_year = consumption_df.groupby(consumption_df[DATE].dt.year)[CONSUMPTION].sum()
 
-production_by_type_and_year = renewable_energy_data.groupby(renewable_energy_data[DATE].dt.year)[columns_to_clean].sum()
+production_by_type_and_year = production_df.groupby(production_df[DATE].dt.year)[columns_to_clean].sum()
 
 pd.options.display.float_format = '{:.2f}'.format
 
 data_by_year = {}
 
-for year, data in renewable_energy_data.groupby(renewable_energy_data[DATE].dt.year):
+for year, data in production_df.groupby(production_df[DATE].dt.year):
     production_data = data[columns_to_clean].sum()
-    consumption_data = energy_consumption_data[energy_consumption_data[DATE].dt.year == year][CONSUMPTION]
+    consumption_data = consumption_df[consumption_df[DATE].dt.year == year][CONSUMPTION]
     total_consumption = consumption_data.sum()
     data_by_year[year] = {'Production': production_data.sum(), 'Consumption': total_consumption, BIOMAS: production_data[BIOMAS], HYDROELECTRIC: production_data[HYDROELECTRIC], WIND_OFFSHORE: production_data[WIND_OFFSHORE], WIND_ONSHORE: production_data[WIND_ONSHORE], PHOTOVOLTAIC: production_data[PHOTOVOLTAIC], OTHER_RENEWABLE: production_data[OTHER_RENEWABLE]}
 
@@ -60,8 +70,8 @@ for year, data in data_by_year.items():
     print()
 
 
-total_renewable_production = renewable_energy_data[columns_to_clean].sum(axis=1)
-total_consumption = energy_consumption_data[CONSUMPTION]
+total_renewable_production = production_df[columns_to_clean].sum(axis=1)
+total_consumption = consumption_df[CONSUMPTION]
 
 def range1(array1, array2):
     if len(array1) != len(array2):
@@ -93,18 +103,32 @@ def get_result(array1, array2):
     for val1, val2 in zip(array1, array2):
         print( val1, "% :"   , val2)
 
-get_result(n, counts)
-print("Anzahl der Viertelstunden in 3 Jahren:", sum(counts))
+#get_result(n, counts)
+#print("Anzahl der Viertelstunden in 3 Jahren:", sum(counts))
 print()
 
 
+# Interaktiver Benutzereingabe für das Datum
+selected_date_str = input("Bitte geben Sie das Datum im Format TT.MM.JJJJ ein: ")
+selected_date = datetime.strptime(selected_date_str, "%d.%m.%Y")
+
+# Filtern der Daten für das ausgewählte Datum
+selected_production = production_df[production_df[DATE] == selected_date]
+selected_consumption = consumption_df[consumption_df[DATE] == selected_date]
+
 end_time = time.time()                         # The time at the end of the program is stored
 duration = end_time - start_time               # Duration of the program is calculated
-print("Duration", duration)
+print("Duration of the program: ", duration)
 
+print(selected_consumption[CONSUMPTION])
+# Plotting
+plt.figure(figsize=(12, 6))
+plt.plot(selected_production['Anfang'].dt.hour, selected_production['Total Production'], label='Total Renewable Production', marker='o')
+plt.plot(selected_consumption['Anfang'].dt.hour, selected_consumption[CONSUMPTION], label='Total Consumption', marker='o')
 
-"""
-# Wie kann man zu den Daten oben zugreifen
-consumption_2021 = data_by_year[2021]['Consumption']
-print(f"Total energy consumption in 2021: {consumption_2021} MWh")
-"""
+plt.title(f'Renewable Energy Production and Total Consumption on {selected_date_str}')
+plt.xlabel('Time (hours)')
+plt.ylabel('Energy (MWh)')
+plt.legend()
+plt.grid(True)
+plt.show()
