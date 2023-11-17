@@ -4,9 +4,12 @@ from datetime import datetime
 import time
 import numpy as np
 
-#Startzeit des Programms
-start_time = time.time()
+# Interaktiver Benutzereingabe für das Datum
+selected_date_str = input("Bitte geben Sie das Datum im Format TT.MM.JJJJ ein: ")
+selected_date = datetime.strptime(selected_date_str, "%d.%m.%Y")
 
+
+start_time = time.time()                      #Startzeit des Programms
 
 # Dateinamen
 file_production = 'Realisierte_Erzeugung_202001010000_202212312359_Viertelstunde.csv'
@@ -18,6 +21,7 @@ consumption_df = pd.read_csv(file_consumption, delimiter=';')
 
 # Spaltenbezeichnungen
 DATE = 'Datum'
+STARTTIME = 'Anfang'
 BIOMAS = 'Biomasse [MWh] Originalauflösungen'
 HYDROELECTRIC = 'Wasserkraft [MWh] Originalauflösungen'
 WIND_OFFSHORE = 'Wind Offshore [MWh] Originalauflösungen'
@@ -26,18 +30,18 @@ PHOTOVOLTAIC = 'Photovoltaik [MWh] Originalauflösungen'
 OTHER_RENEWABLE = 'Sonstige Erneuerbare [MWh] Originalauflösungen'
 CONSUMPTION = 'Gesamt (Netzlast) [MWh] Originalauflösungen'
 
-
 # Umwandlung von Datumsspalten in DateTime-Objekte
 production_df[DATE] = pd.to_datetime(production_df[DATE], format='%d.%m.%Y')
-production_df['Anfang'] = pd.to_datetime(production_df['Anfang'], format='%H:%M')
+production_df[STARTTIME] = pd.to_datetime(production_df[STARTTIME], format='%H:%M')
 consumption_df[DATE] = pd.to_datetime(consumption_df[DATE], format='%d.%m.%Y')
-consumption_df['Anfang'] = pd.to_datetime(consumption_df['Anfang'], format='%H:%M')
+consumption_df[STARTTIME] = pd.to_datetime(consumption_df[STARTTIME], format='%H:%M')
 
-# Rechnen von regenerativen Stromerzeugung
+# Bereinigung von Datenformaten der erneubaren Energien
 columns_to_clean = [HYDROELECTRIC, BIOMAS, WIND_OFFSHORE, WIND_ONSHORE, PHOTOVOLTAIC, OTHER_RENEWABLE]
 for column in columns_to_clean:
     production_df[column] = production_df[column].str.replace(".", "").str.replace(",", ".").replace('-', 0).astype(float)
 
+# Bereinigung von Datenformaten des Gesamtenstromverbrauches
 consumption_df[CONSUMPTION] = consumption_df[CONSUMPTION].str.replace(".", "").str.replace(",", ".").astype(float)
 
 production_df['Total Production'] = production_df[columns_to_clean].sum(axis=1)
@@ -48,6 +52,7 @@ production_by_type_and_year = production_df.groupby(production_df[DATE].dt.year)
 
 pd.options.display.float_format = '{:.2f}'.format
 
+# Aggregation der Daten nach Jahren und Speicherung in einem Dictionary
 data_by_year = {}
 
 for year, data in production_df.groupby(production_df[DATE].dt.year):
@@ -56,7 +61,7 @@ for year, data in production_df.groupby(production_df[DATE].dt.year):
     total_consumption = consumption_data.sum()
     data_by_year[year] = {'Production': production_data.sum(), 'Consumption': total_consumption, BIOMAS: production_data[BIOMAS], HYDROELECTRIC: production_data[HYDROELECTRIC], WIND_OFFSHORE: production_data[WIND_OFFSHORE], WIND_ONSHORE: production_data[WIND_ONSHORE], PHOTOVOLTAIC: production_data[PHOTOVOLTAIC], OTHER_RENEWABLE: production_data[OTHER_RENEWABLE]}
 
-
+# Ausgabe der aggregierten Daten pro Jahr
 for year, data in data_by_year.items():
     print(f"Year: {year}")
     print(f"Total Renewable Energy Production: {data['Production']} MWh")
@@ -69,11 +74,11 @@ for year, data in data_by_year.items():
     print(f"Sonstige Erneuerbare: {data[OTHER_RENEWABLE]} MWh")
     print()
 
-
 total_renewable_production = production_df[columns_to_clean].sum(axis=1)
 total_consumption = consumption_df[CONSUMPTION]
 
-def range1(array1, array2):
+
+def range1(array1, array2):               # Berechnung der prozentualen Anteile der erneuerbaren Energieerzeugung am Gesamtverbrauch
     if len(array1) != len(array2):
         raise ValueError("Arrays must be the same length")
     
@@ -90,11 +95,10 @@ def range1(array1, array2):
 
     return counts
 
-counts =[]
 counts = range1(total_renewable_production, total_consumption)
-n = []
-n = range(111)
+n = range(111) # Anzahl der Prozenten
 
+# Ausgabe von Anteilen
 def get_result(array1, array2):
     print("Anteile in %:")
     if len(array1) != len(array2):
@@ -103,14 +107,9 @@ def get_result(array1, array2):
     for val1, val2 in zip(array1, array2):
         print( val1, "% :"   , val2)
 
-#get_result(n, counts)
-#print("Anzahl der Viertelstunden in 3 Jahren:", sum(counts))
+get_result(n, counts)
+print("Anzahl der Viertelstunden in 3 Jahren:", sum(counts))
 print()
-
-
-# Interaktiver Benutzereingabe für das Datum
-selected_date_str = input("Bitte geben Sie das Datum im Format TT.MM.JJJJ ein: ")
-selected_date = datetime.strptime(selected_date_str, "%d.%m.%Y")
 
 # Filtern der Daten für das ausgewählte Datum
 selected_production = production_df[production_df[DATE] == selected_date]
@@ -120,15 +119,23 @@ end_time = time.time()                         # The time at the end of the prog
 duration = end_time - start_time               # Duration of the program is calculated
 print("Duration of the program: ", duration)
 
-print(selected_consumption[CONSUMPTION])
+
 # Plotting
 plt.figure(figsize=(12, 6))
-plt.plot(selected_production['Anfang'].dt.hour, selected_production['Total Production'], label='Total Renewable Production', marker='o')
-plt.plot(selected_consumption['Anfang'].dt.hour, selected_consumption[CONSUMPTION], label='Total Consumption', marker='o')
+plt.plot(selected_production[STARTTIME], selected_production['Total Production'], label='Total Renewable Production')
+plt.plot(selected_consumption[STARTTIME], selected_consumption[CONSUMPTION], label='Total Consumption')
 
 plt.title(f'Renewable Energy Production and Total Consumption on {selected_date_str}')
 plt.xlabel('Time (hours)')
 plt.ylabel('Energy (MWh)')
 plt.legend()
 plt.grid(True)
+
+# Format x-axis ticks and labels
+unique_hours = sorted(selected_production[STARTTIME].dt.hour.unique())
+plt.xticks(selected_production[STARTTIME], selected_production[STARTTIME].dt.strftime('%H:%M'), rotation=45)
+plt.gca().set_xticks(selected_production[STARTTIME][::4])
+plt.gca().set_xticklabels(selected_production[STARTTIME].dt.strftime('%H')[::4])
+
+
 plt.show()
