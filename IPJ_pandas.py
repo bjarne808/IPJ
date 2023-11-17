@@ -8,7 +8,6 @@ import numpy as np
 selected_date_str = input("Bitte geben Sie das Datum im Format TT.MM.JJJJ ein: ")
 selected_date = datetime.strptime(selected_date_str, "%d.%m.%Y")
 
-
 start_time = time.time()                      #Startzeit des Programms
 
 # Dateinamen
@@ -50,10 +49,9 @@ consumption_by_year = consumption_df.groupby(consumption_df[DATE].dt.year)[CONSU
 
 production_by_type_and_year = production_df.groupby(production_df[DATE].dt.year)[columns_to_clean].sum()
 
-pd.options.display.float_format = '{:.2f}'.format
+pd.options.display.float_format = '{:.2f}'.format  # Set Pandas to display floating-point numbers with two decimal places
 
-# Aggregation der Daten nach Jahren und Speicherung in einem Dictionary
-data_by_year = {}
+data_by_year = {}                                  # Aggregation der Daten nach Jahren und Speicherung in einem Dictionary
 
 for year, data in production_df.groupby(production_df[DATE].dt.year):
     production_data = data[columns_to_clean].sum()
@@ -61,8 +59,8 @@ for year, data in production_df.groupby(production_df[DATE].dt.year):
     total_consumption = consumption_data.sum()
     data_by_year[year] = {'Production': production_data.sum(), 'Consumption': total_consumption, BIOMAS: production_data[BIOMAS], HYDROELECTRIC: production_data[HYDROELECTRIC], WIND_OFFSHORE: production_data[WIND_OFFSHORE], WIND_ONSHORE: production_data[WIND_ONSHORE], PHOTOVOLTAIC: production_data[PHOTOVOLTAIC], OTHER_RENEWABLE: production_data[OTHER_RENEWABLE]}
 
-# Ausgabe der aggregierten Daten pro Jahr
-for year, data in data_by_year.items():
+
+for year, data in data_by_year.items():             # Ausgabe der aggregierten Daten pro Jahr
     print(f"Year: {year}")
     print(f"Total Renewable Energy Production: {data['Production']} MWh")
     print(f"Total Consumption: {data['Consumption']} MWh")
@@ -73,6 +71,7 @@ for year, data in data_by_year.items():
     print(f"Photovoltaik: {data[PHOTOVOLTAIC]} MWh")
     print(f"Sonstige Erneuerbare: {data[OTHER_RENEWABLE]} MWh")
     print()
+
 
 total_renewable_production = production_df[columns_to_clean].sum(axis=1)
 total_consumption = consumption_df[CONSUMPTION]
@@ -117,8 +116,7 @@ selected_consumption = consumption_df[consumption_df[DATE] == selected_date]
 
 end_time = time.time()                         # The time at the end of the program is stored
 duration = end_time - start_time               # Duration of the program is calculated
-print("Duration of the program: ", duration)
-
+print("Duration of the program: ", round(duration, 2))
 
 # Plotting
 plt.figure(figsize=(12, 6))
@@ -137,5 +135,31 @@ plt.xticks(selected_production[STARTTIME], selected_production[STARTTIME].dt.str
 plt.gca().set_xticks(selected_production[STARTTIME][::4])
 plt.gca().set_xticklabels(selected_production[STARTTIME].dt.strftime('%H')[::4])
 
-
 plt.show()
+
+
+
+"""
+# Ein Beispiel für die Berechnung der Gesamtsumme einer bestimmten Art
+selected_energy_type = WIND_ONSHORE
+
+# Für einen Tag
+selected_production_day = selected_production[selected_energy_type].sum()
+print(f"{selected_energy_type} Production on {selected_date}: {selected_production_day} MWh")
+
+# Für ein Jahr
+selected_production_year = production_by_type_and_year.loc[selected_date.year, selected_energy_type]
+print(f"{selected_energy_type} Production for {selected_date.year}: {selected_production_year} MWh")
+
+# Ein Beispiel für die Arbeit mit Listen einer bestimmten Art
+selected_energy_type = WIND_ONSHORE
+
+# Für einen Tag
+selected_production_day_list = selected_production[selected_energy_type].astype(float).tolist()
+print(f"{selected_energy_type} Production List on {selected_date}: {selected_production_day_list}")
+
+# Für ein Jahr
+selected_production_year_list = production_by_type_and_year.loc[selected_date.year, selected_energy_type].tolist()
+print(f"{selected_energy_type} Production List for {selected_date.year}: {selected_production_year_list}")
+
+"""
