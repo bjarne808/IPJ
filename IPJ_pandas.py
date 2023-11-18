@@ -10,9 +10,15 @@ selected_date = datetime.strptime(selected_date_str, "%d.%m.%Y")
 
 start_time = time.time()                      #Startzeit des Programms
 
+
+# Pfad der Dateien
+# CSV-Dateien müssen im gleichen Ordner wie das Python-Skript liegen
+import os
+print(os.getcwd())
+
 # Dateinamen
-file_production = 'Realisierte_Erzeugung_202001010000_202212312359_Viertelstunde.csv'
-file_consumption = 'Realisierter_Stromverbrauch_202001010000_202212312359_Viertelstunde.csv'
+file_production = 'Realisierte_Erzeugung_.csv'
+file_consumption = 'Realisierter_Stromverbrauch_.csv'
 
 # Einlesen der Daten aus CSV-Dateien
 production_df = pd.read_csv(file_production, delimiter=';')
@@ -163,3 +169,91 @@ selected_production_year_list = production_by_type_and_year.loc[selected_date.ye
 print(f"{selected_energy_type} Production List for {selected_date.year}: {selected_production_year_list}")
 
 """
+
+# function that multiplies Windonshore, Windoffshore and PV  with 2030 "Ausbaufaktoren"
+
+def scale_2030_factors(df, windonshore_factor, windoffshore_factor, pv_factor):
+    df_copy = df.copy()
+    df_copy[WIND_ONSHORE] *= windonshore_factor
+    df_copy[WIND_OFFSHORE] *= windoffshore_factor
+    df_copy[PHOTOVOLTAIC] *= pv_factor
+    df_copy['Total Production'] = df_copy[columns_to_clean].sum(axis=1)
+    return df_copy
+
+
+# Define the factors
+windonshore_2030_factor = 2.03563  # assuming Wind Onshore will increase by 203%
+windoffshore_2030_factor = 3.76979  # assuming Wind Offshore will 376% increase
+pv_2030_factor = 3.5593  # assuming PV will increase by 350%
+
+# Scale the data by the factors
+scaled_production_df = scale_2030_factors(production_df, windonshore_2030_factor, windoffshore_2030_factor, pv_2030_factor)
+
+# Filter scaled data for the selected date
+scaled_selected_production = scaled_production_df[scaled_production_df[DATE] == selected_date]
+
+# Plotting
+plt.figure(figsize=(12, 6))
+plt.plot(scaled_selected_production[STARTTIME], scaled_selected_production['Total Production'], label='Total Renewable Production - Scaled')
+plt.plot(selected_consumption[STARTTIME], selected_consumption[CONSUMPTION], label='Total Consumption')
+
+plt.title(f'Scaled Renewable Energy Production and Total Consumption on {selected_date_str}')
+plt.xlabel('Time (hours)')
+plt.ylabel('Energy (MWh)')
+plt.legend()
+plt.grid(True)
+
+# Format x-axis ticks and labels
+unique_hours = sorted(scaled_selected_production[STARTTIME].dt.hour.unique())
+plt.xticks(scaled_selected_production[STARTTIME], scaled_selected_production[STARTTIME].dt.strftime('%H:%M'), rotation=45)
+plt.gca().set_xticks(scaled_selected_production[STARTTIME][::4])
+plt.gca().set_xticklabels(scaled_selected_production[STARTTIME].dt.strftime('%H')[::4])
+
+plt.show()
+
+
+counts = range1(total_renewable_production, total_consumption)
+n = range(111) # Anzahl der Prozenten
+# Ausgabe von Anteilen
+def get_result(array1, array2):
+    print("Anteile in %:")
+    if len(array1) != len(array2):
+        raise ValueError("Arrays must be the same length")
+    
+    for val1, val2 in zip(array1, array2):
+        print( val1, "% :"   , val2)
+
+get_result(n, counts)
+print("Anzahl der Viertelstunden in 2030 (prognostiziert):", sum(counts))
+print()
+
+# Calculate total renewable production for scaled data
+total_renewable_scaled_production = scaled_production_df[columns_to_clean].sum(axis=1)
+
+# get the counts for scaled data
+scaled_counts = range1(total_renewable_scaled_production, total_consumption)
+
+# Ausgabe von Anteilen for scaled data
+get_result(n, scaled_counts)
+print("Anzahl der Viertelstunden in 2030 (mit erreichen der 2030 Ausbauzielen des BMWK):", sum(scaled_counts))
+print()
+
+# Generate the plot for scaled data
+fig, ax = plt.subplots(figsize=(10, 6))  # Adjust size as needed
+x = range(111)  # For percentages 0-110
+ax.bar(x, scaled_counts, width=1)  # width=1 for contiguous bars
+ax.set_title('Anzahl der Viertelstunden mit 1-100 % EE-Anteil in 2030 (prognostiziert)')
+ax.set_xlabel('Percentage of Total Consumption (%)')
+ax.set_ylabel('Anzahl der Viertelstunden')
+ax.set_xticks(x[::10])
+ax.set_xticklabels([f'{i}%' for i in range(0, 111, 10)])
+plt.show()
+
+# assuming quarter_hour_scaled_production and quarter_hour_consumption are your quarter-hourly production and consumption data
+# Calculate the ratio for each quarter-hour
+ratio_quarter_hour = quarter_hour_scaled_production / quarter_hour_consumption
+
+# Check if any ratio is greater than 1.11 (111%)
+higher_share_quarter_hour = any(ratio_quarter_hour > 1.11)
+
+print("The renewables have a higher share than 111% in any quarter-hour:", higher_share_quarter_hour)
