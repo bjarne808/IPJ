@@ -17,8 +17,8 @@ import os
 print(os.getcwd())
 
 # Dateinamen
-file_production = 'Realisierte_Erzeugung_.csv'
-file_consumption = 'Realisierter_Stromverbrauch_.csv'
+file_production = 'Realisierte_Erzeugung_202001010000_202212312359_Viertelstunde.csv'
+file_consumption = 'Realisierter_Stromverbrauch_202001010000_202212312359_Viertelstunde.csv'
 
 # Einlesen der Daten aus CSV-Dateien
 production_df = pd.read_csv(file_production, delimiter=';')
