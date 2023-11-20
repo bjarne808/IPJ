@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import time
 import numpy as np
+import plotly.graph_objects as go
+
 
 # Interaktiver Benutzereingabe für das Datum
 selected_date_str = input("Bitte geben Sie das Datum im Format TT.MM.JJJJ ein: ")
@@ -76,40 +78,6 @@ for year, data in data_by_year.items():             # Ausgabe der aggregierten D
 total_renewable_production = production_df[columns_to_clean].sum(axis=1)
 total_consumption = consumption_df[CONSUMPTION]
 
-
-def range1(array1, array2):               # Berechnung der prozentualen Anteile der erneuerbaren Energieerzeugung am Gesamtverbrauch
-    if len(array1) != len(array2):
-        raise ValueError("Arrays must be the same length")
-    
-    counts = [0] * 111
-
-    for val1, val2 in zip(array1, array2):
-        ratio = val1 / val2
-        percent = int(ratio * 100)
-
-        if percent == 100:
-            counts[percent] += 1
-        elif 0 <= percent < 110:
-            counts[percent] += 1
-
-    return counts
-
-counts = range1(total_renewable_production, total_consumption)
-n = range(111) # Anzahl der Prozenten
-
-# Ausgabe von Anteilen
-def get_result(array1, array2):
-    print("Anteile in %:")
-    if len(array1) != len(array2):
-        raise ValueError("Arrays must be the same length")
-    
-    for val1, val2 in zip(array1, array2):
-        print( val1, "% :"   , val2)
-
-get_result(n, counts)
-print("Anzahl der Viertelstunden in 3 Jahren:", sum(counts))
-print()
-
 # Filtern der Daten für das ausgewählte Datum
 selected_production = production_df[production_df[DATE] == selected_date]
 selected_consumption = consumption_df[consumption_df[DATE] == selected_date]
@@ -137,7 +105,25 @@ plt.gca().set_xticklabels(selected_production[STARTTIME].dt.strftime('%H')[::4])
 
 plt.show()
 
+# Berechnung der prozentualen Anteile der erneuerbaren Energieerzeugung am Gesamtverbrauch
+percent_renewable = total_renewable_production / total_consumption * 100 
 
+counts, intervals = np.histogram(percent_renewable, bins = np.arange(0, 111, 1))  # Use NumPy to calculate the histogram of the percentage distribution
+
+x = intervals[:-1]          # Define the x-axis values as the bin edges
+labels = [f'{i}%' for i in range(0, 111, 1)] # Create labels for x-axis ticks (von 0 bis 111 in Einzelnschritten)
+
+fig = go.Figure(data=[go.Bar(x=x, y=counts)])    # Create a bar chart using Plotly
+
+
+fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(0, 111, 5)), ticktext=labels[::5]))  # X-axis label settings
+
+# Title and axis labels settings
+fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2020-2022 mit 0-110 % EE-Anteil',
+                  xaxis_title='Prozentsatz erneuerbarer Energie',
+                  yaxis_title='Anzahl der Viertelstunden')
+
+fig.show()
 
 """
 # Ein Beispiel für die Berechnung der Gesamtsumme einer bestimmten Art
@@ -163,3 +149,4 @@ selected_production_year_list = production_by_type_and_year.loc[selected_date.ye
 print(f"{selected_energy_type} Production List for {selected_date.year}: {selected_production_year_list}")
 
 """
+
