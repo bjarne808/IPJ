@@ -1,0 +1,49 @@
+# Function to calculate percentage distribution
+def range1(array1, array2):
+    if len(array1) != len(array2):
+        raise ValueError("Arrays must be the same length")
+
+    counts = [0] * 111
+
+    for val1, val2 in zip(array1, array2):
+        ratio = val1 / val2
+        percent = int(ratio * 100)
+
+        if percent == 100:
+            counts[percent] += 1
+        elif 0 <= percent < 110:
+            counts[percent] += 1
+
+    return counts
+
+# Die Funktion, die erlaubt, die Anteile auszugeben und nachzuprüfen
+# Ausgabe von Anteilen
+def get_result(array1, array2):
+    print("Anteile in %:")
+    if len(array1) != len(array2):
+        raise ValueError("Arrays must be the same length")
+    
+    for val1, val2 in zip(array1, array2):
+        print( val1, "% :"   , val2)
+
+get_result(n, counts)
+print("Anzahl der Viertelstunden in 3 Jahren:", sum(counts))
+print()
+
+# Calculation and plotting
+counts = range1(total_renewable_production, total_consumption)
+n = list(range(111))  # Convert range to a list
+
+# Create a bar chart
+fig = go.Figure(data=[go.Bar(x=n, y=counts)])
+
+# X-axis label settings
+fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(0, 115, 5)), ticktext=[f'{i}%' for i in range(0, 115, 5)]))
+
+# Y-axis and title settings
+fig.update_layout(title='Number of quarter-hours with 1-115 % share of renewable energy',
+                  xaxis_title='Percentage of renewable energy',
+                  yaxis_title='Number of quarter-hours')
+
+# Display the chart
+fig.show()
