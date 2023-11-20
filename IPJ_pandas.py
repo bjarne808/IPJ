@@ -153,6 +153,7 @@ print(f"{selected_energy_type} Production List for {selected_date.year}: {select
 
 
 # Define the factors
+# müssen noch angepasst werden
 windonshore_2030_factor = 2.03563  # assuming Wind Onshore will increase by 203%
 windoffshore_2030_factor = 3.76979  # assuming Wind Offshore will 376% increase
 pv_2030_factor = 3.5593  # assuming PV will increase by 350%
@@ -198,17 +199,22 @@ total_scaled_renewable_production = scaled_production_df[columns_to_clean].sum(a
 # Berechnung der prozentualen Anteile der erneuerbaren Energieerzeugung am Gesamtverbrauch
 percent_renewable = total_scaled_renewable_production / total_consumption * 100 
 
-counts, intervals = np.histogram(percent_renewable, bins = np.arange(0, 111, 1))  # Use NumPy to calculate the histogram of the percentage distribution
+counts, intervals = np.histogram(percent_renewable, bins = np.arange(0, 330, 1))  # Use NumPy to calculate the histogram of the percentage distribution
 
 x = intervals[:-1]          # Define the x-axis values as the bin edges
-labels = [f'{i}%' for i in range(0, 111, 1)] # Create labels for x-axis ticks (von 0 bis 111 in Einzelnschritten)
+labels = [f'{i}%' for i in range(0, 330, 1)] # Create labels for x-axis ticks (von 0 bis 111 in Einzelnschritten)
 
 fig = go.Figure(data=[go.Bar(x=x, y=counts)])    # Create a bar chart using Plotly
-fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(0, 111, 5)), ticktext=labels[::5]))  # X-axis label settings
+fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(0, 330, 5)), ticktext=labels[::5]))  # X-axis label settings
 
 # Title and axis labels settings
-fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2020-2022 mit 0-110 % EE-Anteil',
+fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2030 - 2032 mit 0-330 % EE-Anteil',
                   xaxis_title='Prozentsatz erneuerbarer Energie',
                   yaxis_title='Anzahl der Viertelstunden')
 
 fig.show()
+
+# how many quarter hours are in scaled_production_df
+print ( "soviele VS sind in scaled_production_df:" )
+print (len(scaled_production_df)) 
+print("Viertelstunden aus drei Jahren")
