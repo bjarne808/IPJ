@@ -47,3 +47,33 @@ fig.update_layout(title='Number of quarter-hours with 1-115 % share of renewable
 
 # Display the chart
 fig.show()
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+"""
+# Ein Beispiel für die Berechnung der Gesamtsumme einer bestimmten Art
+selected_energy_type = WIND_ONSHORE
+
+# Für einen Tag
+selected_production_day = selected_production[selected_energy_type].sum()
+print(f"{selected_energy_type} Production on {selected_date}: {selected_production_day} MWh")
+
+# Für ein Jahr
+selected_production_year = production_by_type_and_year.loc[selected_date.year, selected_energy_type]
+print(f"{selected_energy_type} Production for {selected_date.year}: {selected_production_year} MWh")
+
+# Ein Beispiel für die Arbeit mit Listen einer bestimmten Art
+selected_energy_type = WIND_ONSHORE
+
+# Für einen Tag
+selected_production_day_list = selected_production[selected_energy_type].astype(float).tolist()
+print(f"{selected_energy_type} Production List on {selected_date}: {selected_production_day_list}")
+
+# Für ein Jahr
+selected_production_year_list = production_by_type_and_year.loc[selected_date.year, selected_energy_type].tolist()
+print(f"{selected_energy_type} Production List for {selected_date.year}: {selected_production_year_list}")
+
+"""
+
+
