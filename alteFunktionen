@@ -76,4 +76,23 @@ print(f"{selected_energy_type} Production List for {selected_date.year}: {select
 
 """
 
+---------------------------------------------------------------------------------------------------------------------------------------
+# Plotting 21.11.2023
+plt.figure(figsize=(12, 6))
+plt.plot(selected_production[STARTTIME], selected_production['Total Production'], label='Total Renewable Production')
+plt.plot(selected_consumption[STARTTIME], selected_consumption[CONSUMPTION], label='Total Consumption')
 
+plt.title(f'Renewable Energy Production and Total Consumption on {selected_date_str}')
+plt.xlabel('Time (hours)')
+plt.ylabel('Energy (MWh)')
+plt.legend()
+plt.grid(True)
+
+# Format x-axis ticks and labels
+unique_hours = sorted(selected_production[STARTTIME].dt.hour.unique())
+plt.xticks(selected_production[STARTTIME], selected_production[STARTTIME].dt.strftime('%H:%M'), rotation=45)
+plt.gca().set_xticks(selected_production[STARTTIME][::4])
+plt.gca().set_xticklabels(selected_production[STARTTIME].dt.strftime('%H')[::4])
+
+plt.show()
+------------------------------------------------------------------------------------------------------------------------------------------
