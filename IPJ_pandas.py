@@ -4,6 +4,8 @@ from datetime import datetime
 import time
 import numpy as np
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import streamlit as st
 
 
 # Interaktiver Benutzereingabe für das Datum
@@ -74,7 +76,6 @@ for year, data in data_by_year.items():             # Ausgabe der aggregierten D
     print(f"Sonstige Erneuerbare: {data[OTHER_RENEWABLE]} MWh")
     print()
 
-
 total_renewable_production = production_df[columns_to_clean].sum(axis=1)
 total_consumption = consumption_df[CONSUMPTION]
 
@@ -86,9 +87,93 @@ end_time = time.time()                         # The time at the end of the prog
 duration = end_time - start_time               # Duration of the program is calculated
 print("Duration of the program: ", round(duration, 2))
 
+# Berechnung der prozentualen Anteile der erneuerbaren Energieerzeugung am Gesamtverbrauch
+percent_renewable = total_renewable_production / total_consumption * 100 
+
+counts, intervals = np.histogram(percent_renewable, bins = np.arange(0, 111, 1))  # Use NumPy to calculate the histogram of the percentage distribution
+
+x = intervals[:-1]                               # Define the x-axis values as the bin edges
+labels = [f'{i}%' for i in range(0, 111, 1)]     # Create labels for x-axis ticks (von 0 bis 111 in Einzelnschritten)
+
+fig = go.Figure(data=[go.Bar(x=x, y=counts)])    # Create a bar chart using Plotly
+
+fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(0, 111, 5)), ticktext=labels[::5]))  # X-axis label settings
+
+# Title and axis labels settings
+fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2020-2022 mit 0-110 % EE-Anteilen',
+                  xaxis_title='Prozentsatz erneuerbarer Energie',
+                  yaxis_title='Anzahl der Viertelstunden')
+
+fig.show()
+ 
+# Plotting with Plotly
+# Create a new Plotly subplot figure
+fig = make_subplots()
+
+# Add the energy consumption trace
+fig.add_trace(
+    go.Scatter(
+        x=selected_consumption[STARTTIME].dt.strftime('%H:%M'), 
+        y=selected_consumption[CONSUMPTION],
+        mode='lines',
+        name='Total Consumption',
+        fill='tozeroy'
+    )
+)
+
+# Add the renewable energy production trace
+fig.add_trace(
+    go.Scatter(
+        x=selected_production[STARTTIME].dt.strftime('%H:%M'),
+        y=selected_production['Total Production'],
+        mode='lines',
+        name='Total Renewable Production',
+        fill='tozeroy'
+    )
+)
+
+
+fig.update_layout(
+    title=f'Energy Production and Consumption on {selected_date}',
+    xaxis=dict(title='Time (hours)'),
+    yaxis=dict(title='Energy (MWh)'),
+    showlegend=True
+)
+
+
+# Show the plot using st.plotly_chart
+fig.show()
+#st.plotly_chart(fig)
+
+# code to make 2030 prediction
+# 2030 prediction
+
+
+# Define the factors
+# müssen noch angepasst werden
+windonshore_2030_factor = 2.03563  # assuming Wind Onshore will increase by 203%
+windoffshore_2030_factor = 3.76979  # assuming Wind Offshore will 376% increase
+pv_2030_factor = 3.5593  # assuming PV will increase by 350%
+
+def scale_2030_factors(df, windonshore_factor, windoffshore_factor, pv_factor):
+    df_copy = df.copy()
+    df_copy[WIND_ONSHORE] *= windonshore_factor
+    df_copy[WIND_OFFSHORE] *= windoffshore_factor
+    df_copy[PHOTOVOLTAIC] *= pv_factor
+    df_copy['Total Production'] = df_copy[columns_to_clean].sum(axis=1)
+    return df_copy
+
+
+# Scale the data by the factors
+scaled_production_df = scale_2030_factors(production_df, windonshore_2030_factor, windoffshore_2030_factor, pv_2030_factor)
+
+# Filter the data for the selected date
+scaled_selected_production = scaled_production_df[scaled_production_df[DATE] == selected_date]
+
+# Plot the data
 # Plotting
 plt.figure(figsize=(12, 6))
-plt.plot(selected_production[STARTTIME], selected_production['Total Production'], label='Total Renewable Production')
+plt.plot(scaled_selected_production[STARTTIME], scaled_selected_production['Total Production'], label='Total Renewable Production')
 plt.plot(selected_consumption[STARTTIME], selected_consumption[CONSUMPTION], label='Total Consumption')
 
 plt.title(f'Renewable Energy Production and Total Consumption on {selected_date_str}')
@@ -98,55 +183,35 @@ plt.legend()
 plt.grid(True)
 
 # Format x-axis ticks and labels
-unique_hours = sorted(selected_production[STARTTIME].dt.hour.unique())
-plt.xticks(selected_production[STARTTIME], selected_production[STARTTIME].dt.strftime('%H:%M'), rotation=45)
-plt.gca().set_xticks(selected_production[STARTTIME][::4])
-plt.gca().set_xticklabels(selected_production[STARTTIME].dt.strftime('%H')[::4])
-
+unique_hours = sorted(scaled_selected_production[STARTTIME].dt.hour.unique())
+plt.xticks(scaled_selected_production[STARTTIME], selected_production[STARTTIME].dt.strftime('%H:%M'), rotation=45)
+plt.gca().set_xticks(scaled_selected_production[STARTTIME][::4])
+plt.gca().set_xticklabels(scaled_selected_production[STARTTIME].dt.strftime('%H')[::4])
 plt.show()
 
-# Berechnung der prozentualen Anteile der erneuerbaren Energieerzeugung am Gesamtverbrauch
-percent_renewable = total_renewable_production / total_consumption * 100 
 
-counts, intervals = np.histogram(percent_renewable, bins = np.arange(0, 111, 1))  # Use NumPy to calculate the histogram of the percentage distribution
+#code to do 2030 quarter hours
+total_scaled_renewable_production = scaled_production_df[columns_to_clean].sum(axis=1)
+
+# Berechnung der prozentualen Anteile der erneuerbaren Energieerzeugung am Gesamtverbrauch
+percent_renewable = total_scaled_renewable_production / total_consumption * 100 
+
+counts, intervals = np.histogram(percent_renewable, bins = np.arange(0, 330, 1))  # Use NumPy to calculate the histogram of the percentage distribution
 
 x = intervals[:-1]          # Define the x-axis values as the bin edges
-labels = [f'{i}%' for i in range(0, 111, 1)] # Create labels for x-axis ticks (von 0 bis 111 in Einzelnschritten)
+labels = [f'{i}%' for i in range(0, 330, 1)] # Create labels for x-axis ticks (von 0 bis 111 in Einzelnschritten)
 
 fig = go.Figure(data=[go.Bar(x=x, y=counts)])    # Create a bar chart using Plotly
-
-
-fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(0, 111, 5)), ticktext=labels[::5]))  # X-axis label settings
+fig.update_layout(xaxis=dict(tickmode='array', tickvals=list(range(0, 330, 5)), ticktext=labels[::5]))  # X-axis label settings
 
 # Title and axis labels settings
-fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2020-2022 mit 0-110 % EE-Anteil',
+fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2030 - 2032 mit 0-330 % EE-Anteil',
                   xaxis_title='Prozentsatz erneuerbarer Energie',
                   yaxis_title='Anzahl der Viertelstunden')
 
 fig.show()
 
-"""
-# Ein Beispiel für die Berechnung der Gesamtsumme einer bestimmten Art
-selected_energy_type = WIND_ONSHORE
-
-# Für einen Tag
-selected_production_day = selected_production[selected_energy_type].sum()
-print(f"{selected_energy_type} Production on {selected_date}: {selected_production_day} MWh")
-
-# Für ein Jahr
-selected_production_year = production_by_type_and_year.loc[selected_date.year, selected_energy_type]
-print(f"{selected_energy_type} Production for {selected_date.year}: {selected_production_year} MWh")
-
-# Ein Beispiel für die Arbeit mit Listen einer bestimmten Art
-selected_energy_type = WIND_ONSHORE
-
-# Für einen Tag
-selected_production_day_list = selected_production[selected_energy_type].astype(float).tolist()
-print(f"{selected_energy_type} Production List on {selected_date}: {selected_production_day_list}")
-
-# Für ein Jahr
-selected_production_year_list = production_by_type_and_year.loc[selected_date.year, selected_energy_type].tolist()
-print(f"{selected_energy_type} Production List for {selected_date.year}: {selected_production_year_list}")
-
-"""
-
+# how many quarter hours are in scaled_production_df
+print ( "soviele VS sind in scaled_production_df:" )
+print (len(scaled_production_df)) 
+print("Viertelstunden aus drei Jahren")
