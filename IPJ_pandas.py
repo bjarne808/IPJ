@@ -153,9 +153,7 @@ fig.update_layout(
 #fig.show()
 #st.plotly_chart(fig)
 
-#Dunkelflaute----------------------------------------------------------------------------------------
-
-production_by_day = production_df.groupby(production_df[DATE].dt.day)['Total Production'].sum()
+#-------------------------------Dunkelflaute----------------------------------------------------------------------------------------
 
 installed_power_dict = {
     2020: 122603,
@@ -163,54 +161,61 @@ installed_power_dict = {
     2022: 133808
 }
 
-def find_dark_lulls(selected_date, production_df, installed_power_dict):
+def find_dark_lulls(selected_date, production_df, installed_power_dict, count_dict):
+    # Get the year of the selected date
     year = selected_date.year
     
-    # Installierte Leistung für das entsprechende Jahr
+    # Installed power for the corresponding year
     installed_power = installed_power_dict.get(year, None)
     
     if installed_power is None:
-        print(f"Keine installierte Leistung für das Jahr {year} gefunden.")
+        print(f"No installed power found for the year {year}.")
         return None
     
-    
+    # Filter data for the selected date
     selected_production = production_df[production_df[DATE] == selected_date]
     
-   
+    # Sum the renewable energy production for the selected date
     total_renewable_production_selected_date = selected_production[columns_to_clean].sum(axis=1).sum()
-
-    threshold = installed_power * 0.1
     
-    if total_renewable_production_selected_date/24 < threshold:
-        return selected_date
+    # Compare with installed power for different thresholds
+    threshold_10_percent = installed_power * 0.1
+    threshold_20_percent = installed_power * 0.2
+    
+    if total_renewable_production_selected_date/24 < threshold_10_percent:
+        count_dict["up to 10%"].append(selected_date)
+    elif total_renewable_production_selected_date/24 < threshold_20_percent:
+        count_dict["up to 20%"].append(selected_date)
     else:
         return None
 
-
 def find_dark_lulls_for_years(production_df, installed_power_dict):
-
+    # Loop through all days in the years 2020 to 2022
     start_date = datetime(2020, 1, 1)
     end_date = datetime(2022, 12, 31)
 
-    dark_lulls_days = []
+    dark_lulls_dict = {"up to 10%": [], "up to 20%": []}
     current_date = start_date
     
     while current_date <= end_date:
-        dark_lull_day = find_dark_lulls(current_date, production_df, installed_power_dict)
-        if dark_lull_day:
-            dark_lulls_days.append(dark_lull_day)
+        find_dark_lulls(current_date, production_df, installed_power_dict, dark_lulls_dict)
         current_date += pd.DateOffset(days=1)
     
-    if dark_lulls_days:
-        print("Dunkelflaute Tage:")
-        for day in dark_lulls_days:
-            print(day.strftime("%d.%m.%Y"))
-    else:
-        print("Keine Dunkelflaute Tage gefunden.")
+    # Sort lists by date
+    for label, days_list in dark_lulls_dict.items():
+        dark_lulls_dict[label] = sorted(days_list)
+    
+    # Display the sorted lists
+    print("\nList of days up to 10%:")
+    for day in dark_lulls_dict["up to 10%"]:
+        print(day.strftime('%d.%m.%Y'))
 
-find_dark_lulls_for_years(production_df, installed_power_dict)
-
-
+    print("\nList of days up to 20%:")
+    for day in dark_lulls_dict["up to 20%"]:
+        print(day.strftime('%d.%m.%Y'))
+    
+    print("\nNumber of days up to 10%:", len(dark_lulls_dict["up to 10%"]))
+    print("Number of days up to 20%:", len(dark_lulls_dict["up to 20%"]))
 
 #--------------------------------------------------------------------------
 
