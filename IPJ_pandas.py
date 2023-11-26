@@ -4,9 +4,10 @@ from datetime import datetime
 import time
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 from plotly.subplots import make_subplots
 import streamlit as st
-
+from energyConsumption import energyConsumption
 
 # Interaktiver Benutzereingabe für das Datum
 selected_date_str = input("Bitte geben Sie das Datum im Format TT.MM.JJJJ ein: ")
@@ -51,6 +52,7 @@ production_df['Total Production'] = production_df[columns_to_clean].sum(axis=1)
 production_by_year = production_df.groupby(production_df[DATE].dt.year)['Total Production'].sum()
 consumption_by_year = consumption_df.groupby(consumption_df[DATE].dt.year)[CONSUMPTION].sum()
 
+
 production_by_type_and_year = production_df.groupby(production_df[DATE].dt.year)[columns_to_clean].sum()
 
 pd.options.display.float_format = '{:.2f}'.format  # Set Pandas to display floating-point numbers with two decimal places
@@ -83,6 +85,12 @@ total_consumption = consumption_df[CONSUMPTION]
 selected_production = production_df[production_df[DATE] == selected_date]
 selected_consumption = consumption_df[consumption_df[DATE] == selected_date]
 
+total_renewable_production_selected_date = selected_production[columns_to_clean].sum(axis=1).sum()
+print(f"Summe der erneuerbaren Energien am {selected_date_str}: {total_renewable_production_selected_date} MWh")
+
+
+
+
 end_time = time.time()                         # The time at the end of the program is stored
 duration = end_time - start_time               # Duration of the program is calculated
 print("Duration of the program: ", round(duration, 2))
@@ -104,7 +112,7 @@ fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2020-2022 mit 0-110
                   xaxis_title='Prozentsatz erneuerbarer Energie',
                   yaxis_title='Anzahl der Viertelstunden')
 
-fig.show()
+#fig.show()
  
 # Plotting with Plotly
 # Create a new Plotly subplot figure
@@ -142,8 +150,69 @@ fig.update_layout(
 
 
 # Show the plot using st.plotly_chart
-fig.show()
+#fig.show()
 #st.plotly_chart(fig)
+
+#Dunkelflaute----------------------------------------------------------------------------------------
+
+production_by_day = production_df.groupby(production_df[DATE].dt.day)['Total Production'].sum()
+
+installed_power_dict = {
+    2020: 122603,
+    2021: 129551,
+    2022: 133808
+}
+
+def find_dark_lulls(selected_date, production_df, installed_power_dict):
+    year = selected_date.year
+    
+    # Installierte Leistung für das entsprechende Jahr
+    installed_power = installed_power_dict.get(year, None)
+    
+    if installed_power is None:
+        print(f"Keine installierte Leistung für das Jahr {year} gefunden.")
+        return None
+    
+    
+    selected_production = production_df[production_df[DATE] == selected_date]
+    
+   
+    total_renewable_production_selected_date = selected_production[columns_to_clean].sum(axis=1).sum()
+
+    threshold = installed_power * 0.1
+    
+    if total_renewable_production_selected_date/24 < threshold:
+        return selected_date
+    else:
+        return None
+
+
+def find_dark_lulls_for_years(production_df, installed_power_dict):
+
+    start_date = datetime(2020, 1, 1)
+    end_date = datetime(2022, 12, 31)
+
+    dark_lulls_days = []
+    current_date = start_date
+    
+    while current_date <= end_date:
+        dark_lull_day = find_dark_lulls(current_date, production_df, installed_power_dict)
+        if dark_lull_day:
+            dark_lulls_days.append(dark_lull_day)
+        current_date += pd.DateOffset(days=1)
+    
+    if dark_lulls_days:
+        print("Dunkelflaute Tage:")
+        for day in dark_lulls_days:
+            print(day.strftime("%d.%m.%Y"))
+    else:
+        print("Keine Dunkelflaute Tage gefunden.")
+
+find_dark_lulls_for_years(production_df, installed_power_dict)
+
+
+
+#--------------------------------------------------------------------------
 
 # code to make 2030 prediction
 # 2030 prediction
@@ -209,9 +278,51 @@ fig.update_layout(title='Anzahl der Viertelstunden in Jahren 2030 - 2032 mit 0-3
                   xaxis_title='Prozentsatz erneuerbarer Energie',
                   yaxis_title='Anzahl der Viertelstunden')
 
-fig.show()
+#fig.show()
 
 # how many quarter hours are in scaled_production_df
 print ( "soviele VS sind in scaled_production_df:" )
 print (len(scaled_production_df)) 
 print("Viertelstunden aus drei Jahren")
+
+#----------------------------------------------------------------
+# code to make 2030 prediction
+# 2030 prediction
+
+
+prognoseVerbrauch2030df = energyConsumption(consumption_df)
+
+# Annahme: 'Anfang' ist eine Spalte im DataFrame prognoseVerbrauch2030df
+prognoseVerbrauch2030df['Anfang'] = pd.to_datetime(prognoseVerbrauch2030df['Anfang'], format='%H:%M')
+
+# Benutzereingabe für das Datum
+selected_date_str2030 = input("Bitte geben Sie das Datum im Format TT.MM.JJJJ ein: ")
+selected_date2030 = pd.to_datetime(selected_date_str2030, format='%d.%m.%Y')
+
+
+
+print(selected_date_str2030)
+
+# Plotly-Figur als erstellen Scatter-Diagramm erstellen
+fig = go.Figure(
+    go.Scatter(
+        x=prognoseVerbrauch2030df['Anfang'],
+        y=prognoseVerbrauch2030df['Gesamt (Netzlast) [kWh] Originalauflösungen'],
+        mode='lines',
+        name=f'Total Energy Consumption on {selected_date_str2030}',  # Änderung hier, um den Datumsstring einzufügen
+        fill='tozeroy'
+    )
+)
+
+
+# Layout aktualisieren
+fig.update_layout(
+    title=f'Energy Consumption 2030 on {selected_date_str2030}',
+    xaxis=dict(title='Time (hours)'),
+    yaxis=dict(title='Energy (MWh)'),
+    showlegend=True
+)
+
+# Diagramm anzeigen
+#fig.show()
+
