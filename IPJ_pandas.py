@@ -217,6 +217,9 @@ def find_dark_lulls_for_years(production_df, installed_power_dict):
     print("\nNumber of days up to 10%:", len(dark_lulls_dict["up to 10%"]))
     print("Number of days up to 20%:", len(dark_lulls_dict["up to 20%"]))
 
+
+find_dark_lulls_for_years(production_df, installed_power_dict)
+
 #--------------------------------------------------------------------------
 
 # code to make 2030 prediction
